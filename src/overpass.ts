@@ -3,6 +3,7 @@ import type { POIType } from './poi-types'
 
 interface OverpassElement {
   id: number
+  type: string
   lat?: number
   lon?: number
   center?: { lat: number; lon: number }
@@ -15,6 +16,7 @@ interface OverpassResponse {
 
 export interface POI {
   id: number
+  type: string
   lat: number
   lon: number
   tags: Record<string, string>
@@ -68,7 +70,7 @@ out center;
         .map((e) => {
           const lat = e.lat ?? e.center?.lat ?? 0
           const lon = e.lon ?? e.center?.lon ?? 0
-          return { id: e.id, lat, lon, tags: e.tags }
+          return { id: e.id, type: e.type, lat, lon, tags: e.tags }
         }),
     )
   }

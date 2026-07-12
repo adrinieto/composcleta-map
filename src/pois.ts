@@ -1,6 +1,6 @@
 import * as L from 'leaflet'
 import type { POIType, POISubtype } from './poi-types'
-import { fetchPOIs } from './overpass'
+import { fetchPOIs, type POI } from './overpass'
 import { CONCELLO_BOUNDS } from './config'
 import { devLog } from './utils'
 
@@ -11,15 +11,19 @@ export interface POILayerGroup {
   count: number
 }
 
-function buildPopupHTML(type: POIType, tags: Record<string, string>): string {
+function buildPopupHTML(type: POIType, poi: POI): string {
   let html = `<strong>${type.popupLabel}</strong>`
 
   const rows = type.popupFields
-    .filter((f) => tags[f.key])
-    .map((f) => `<br>${f.label}: ${tags[f.key]}`)
+    .filter((f) => poi.tags[f.key])
+    .map((f) => `<br>${f.label}: ${poi.tags[f.key]}`)
 
   if (rows.length > 0) {
     html += rows.join('')
+  }
+
+  if (import.meta.env.DEV) {
+    html += `<br><a href="https://www.openstreetmap.org/${poi.type}/${poi.id}" target="_blank" rel="noopener">Open in OpenStreetMap</a>`
   }
 
   return html
@@ -93,7 +97,7 @@ export async function createPOIMarkers(
       })
 
       L.marker([poi.lat, poi.lon], { icon })
-        .bindPopup(buildPopupHTML(type, poi.tags))
+        .bindPopup(buildPopupHTML(type, poi))
         .addTo(group.layer)
 
       group.count++
