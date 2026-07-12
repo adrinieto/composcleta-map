@@ -6,11 +6,13 @@ import { POI_TYPES } from './poi-types'
 import { createPOIMarkers } from './pois'
 import { createFilter } from './filter'
 import { addMyLocationControl } from './location'
+import { addLegendControl } from './legend'
 import { devLog } from './utils'
 
 const map = L.map('map', MAP_OPTIONS)
 cyclosmLayer.addTo(map)
 addMyLocationControl(map)
+addLegendControl(map)
 
 map.on('moveend', () => saveMapState(map))
 
