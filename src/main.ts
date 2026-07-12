@@ -23,17 +23,27 @@ if (import.meta.env.DEV) {
 }
 
 const statusEl = L.DomUtil.create('div', 'status-message', map.getContainer())
-const spinner = L.DomUtil.create('div', 'spinner', statusEl)
-L.DomUtil.create('span', '', statusEl).textContent = 'Cargando datos\u2026'
 
-createPOIMarkers(map, POI_TYPES)
-  .then((groups) => {
-    statusEl.remove()
-    createFilter(map, groups)
-  })
-  .catch((err) => {
-    console.error('Failed to load POIs:', err)
-    spinner.remove()
-    statusEl.textContent = 'Error obteniendo datos'
-    statusEl.classList.add('error')
-  })
+function loadPOIs() {
+  statusEl.innerHTML = ''
+  statusEl.className = 'status-message'
+  L.DomUtil.create('div', 'spinner', statusEl)
+  L.DomUtil.create('span', '', statusEl).textContent = 'Cargando datos\u2026'
+
+  createPOIMarkers(map, POI_TYPES)
+    .then((groups) => {
+      statusEl.remove()
+      createFilter(map, groups)
+    })
+    .catch((err) => {
+      console.error('Failed to load POIs:', err)
+      statusEl.innerHTML = ''
+      L.DomUtil.create('span', '', statusEl).textContent = 'Error obteniendo datos '
+      const retry = L.DomUtil.create('button', 'retry-btn', statusEl)
+      retry.textContent = 'Reintentar'
+      retry.addEventListener('click', loadPOIs)
+      statusEl.classList.add('error')
+    })
+}
+
+loadPOIs()

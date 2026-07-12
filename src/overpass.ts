@@ -43,13 +43,17 @@ export async function fetchPOIs(
 out center;
 `
 
-  const url = `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`
+  const url = 'https://overpass-api.de/api/interpreter'
+
+  const body = new URLSearchParams({ data: query })
 
   const res = await fetch(url, {
+    method: 'POST',
     headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
       'User-Agent': 'composcleta-osm-map/1.0 (https://github.com/adrinieto/composcleta-map)',
-      'Referer': 'https://adrinieto.github.io/composcleta-map/',
     },
+    body,
   })
   if (!res.ok) throw new Error(`Overpass API error: ${res.status}`)
 

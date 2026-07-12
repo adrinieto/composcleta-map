@@ -136,6 +136,22 @@ body,
   color: #c00;
 }
 
+.retry-btn {
+  background: none;
+  border: 1px solid #c00;
+  border-radius: 4px;
+  color: #c00;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: inherit;
+  padding: 2px 8px;
+}
+
+.retry-btn:hover {
+  background: #c00;
+  color: #fff;
+}
+
 .leaflet-control-location {
   width: 30px;
   height: 30px;
