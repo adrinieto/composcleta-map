@@ -66,12 +66,6 @@ export function createFilter(
           'filter-section-header',
           section,
         )
-        const sectionToggle = L.DomUtil.create(
-          'button',
-          'filter-toggle',
-          sectionHeader,
-        )
-        sectionToggle.textContent = '−'
 
         const sectionLabel = L.DomUtil.create('span', '', sectionHeader)
         const total = parentGroups.reduce((s, g) => s + g.count, 0)
@@ -82,15 +76,6 @@ export function createFilter(
         for (const group of parentGroups) {
           createFilterRow(map, sectionList, group)
         }
-
-        let collapsed = false
-        sectionToggle.textContent = collapsed ? '+' : '−'
-        if (collapsed) sectionList.style.display = 'none'
-        sectionToggle.addEventListener('click', () => {
-          collapsed = !collapsed
-          sectionList.style.display = collapsed ? 'none' : ''
-          sectionToggle.textContent = collapsed ? '+' : '−'
-        })
       }
 
       let collapsed = isMobile()
