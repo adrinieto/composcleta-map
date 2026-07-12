@@ -135,3 +135,22 @@ body,
   background: #fee;
   color: #c00;
 }
+
+.leaflet-control-location {
+  width: 30px;
+  height: 30px;
+  cursor: pointer;
+}
+
+.leaflet-control-location img {
+  display: block;
+  width: 30px;
+  height: 30px;
+  padding: 5px;
+  box-sizing: border-box;
+  background: #fff;
+}
+
+.leaflet-control-location:hover {
+  background: #f4f4f4;
+}

@@ -5,10 +5,12 @@ import { cyclosmLayer } from './layers'
 import { POI_TYPES } from './poi-types'
 import { createPOIMarkers } from './pois'
 import { createFilter } from './filter'
+import { addMyLocationControl } from './location'
 import { devLog } from './utils'
 
 const map = L.map('map', MAP_OPTIONS)
 cyclosmLayer.addTo(map)
+addMyLocationControl(map)
 
 if (import.meta.env.DEV) {
   L.rectangle(CONCELLO_BOUNDS, {
