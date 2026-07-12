@@ -1,5 +1,6 @@
 import * as L from 'leaflet'
 import type { POILayerGroup } from './pois'
+import { isMobile } from './utils'
 
 function createFilterRow(
   map: L.Map,
@@ -83,6 +84,8 @@ export function createFilter(
         }
 
         let collapsed = false
+        sectionToggle.textContent = collapsed ? '+' : '−'
+        if (collapsed) sectionList.style.display = 'none'
         sectionToggle.addEventListener('click', () => {
           collapsed = !collapsed
           sectionList.style.display = collapsed ? 'none' : ''
@@ -90,7 +93,9 @@ export function createFilter(
         })
       }
 
-      let collapsed = false
+      let collapsed = isMobile()
+      toggle.textContent = collapsed ? '+' : '−'
+      if (collapsed) list.style.display = 'none'
       toggle.addEventListener('click', () => {
         collapsed = !collapsed
         list.style.display = collapsed ? 'none' : ''

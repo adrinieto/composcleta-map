@@ -3,3 +3,7 @@ export function devLog(...args: unknown[]): void {
     console.log(...args)
   }
 }
+
+export function isMobile(): boolean {
+  return window.innerWidth < 768
+}
