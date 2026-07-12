@@ -1,6 +1,6 @@
 import * as L from 'leaflet'
 import './style.css'
-import { MAP_OPTIONS, CONCELLO_BOUNDS } from './config'
+import { MAP_OPTIONS, CONCELLO_BOUNDS, saveMapState } from './config'
 import { cyclosmLayer } from './layers'
 import { POI_TYPES } from './poi-types'
 import { createPOIMarkers } from './pois'
@@ -11,6 +11,8 @@ import { devLog } from './utils'
 const map = L.map('map', MAP_OPTIONS)
 cyclosmLayer.addTo(map)
 addMyLocationControl(map)
+
+map.on('moveend', () => saveMapState(map))
 
 if (import.meta.env.DEV) {
   L.rectangle(CONCELLO_BOUNDS, {
