@@ -3,8 +3,9 @@ import type { POIType } from './poi-types'
 
 interface OverpassElement {
   id: number
-  lat: number
-  lon: number
+  lat?: number
+  lon?: number
+  center?: { lat: number; lon: number }
   tags: Record<string, string>
 }
 
@@ -28,7 +29,10 @@ export async function fetchPOIs(
   const bbox = `${sw.lat},${sw.lng},${ne.lat},${ne.lng}`
 
   const queries = types
-    .map((t) => `node["${t.tag}"="${t.value}"](${bbox});`)
+    .map(
+      (t) =>
+        `node["${t.tag}"="${t.value}"](${bbox});\nway["${t.tag}"="${t.value}"](${bbox});\nrelation["${t.tag}"="${t.value}"](${bbox});`,
+    )
     .join('\n')
 
   const query = `
@@ -36,7 +40,7 @@ export async function fetchPOIs(
 (
   ${queries}
 );
-out body;
+out center;
 `
 
   const url = `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`
@@ -52,12 +56,11 @@ out body;
       `${type.tag}=${type.value}`,
       data.elements
         .filter((e) => e.tags[type.tag] === type.value)
-        .map((e) => ({
-          id: e.id,
-          lat: e.lat,
-          lon: e.lon,
-          tags: e.tags,
-        })),
+        .map((e) => {
+          const lat = e.lat ?? e.center?.lat ?? 0
+          const lon = e.lon ?? e.center?.lon ?? 0
+          return { id: e.id, lat, lon, tags: e.tags }
+        }),
     )
   }
 

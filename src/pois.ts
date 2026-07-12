@@ -1,8 +1,14 @@
 import * as L from 'leaflet'
-import type { POIType } from './poi-types'
+import type { POIType, POISubtype } from './poi-types'
 import { fetchPOIs } from './overpass'
 import { CONCELLO_BOUNDS } from './config'
 import { devLog } from './utils'
+
+export interface POILayerGroup {
+  subtype: POISubtype | null
+  layer: L.LayerGroup
+  count: number
+}
 
 function buildPopupHTML(type: POIType, tags: Record<string, string>): string {
   let html = `<strong>${type.label}</strong>`
@@ -18,11 +24,21 @@ function buildPopupHTML(type: POIType, tags: Record<string, string>): string {
   return html
 }
 
+function resolveIcon(
+  type: POIType,
+  tags: Record<string, string>,
+): string {
+  const parkingType = tags[type.tag === 'amenity' ? 'bicycle_parking' : type.tag]
+  const subtype = type.subtypes.find((s) => s.key === parkingType)
+  return subtype?.icon ?? type.fallbackIcon
+}
+
 export async function createPOIMarkers(
   map: L.Map,
   types: POIType[],
-): Promise<void> {
+): Promise<POILayerGroup[]> {
   const data = await fetchPOIs(CONCELLO_BOUNDS, types)
+  const result: POILayerGroup[] = []
 
   for (const type of types) {
     const key = `${type.tag}=${type.value}`
@@ -30,12 +46,29 @@ export async function createPOIMarkers(
 
     devLog(`Fetched ${pois.length} ${type.label}`)
 
-    const group = L.layerGroup()
+    const groups = new Map<string, POILayerGroup>()
+
+    for (const subtype of type.subtypes) {
+      groups.set(subtype.key, { subtype, layer: L.layerGroup(), count: 0 })
+    }
+    groups.set('__other__', {
+      subtype: { key: '__other__', label: 'Otros', icon: type.fallbackIcon },
+      layer: L.layerGroup(),
+      count: 0,
+    })
 
     for (const poi of pois) {
+      const parkingType = poi.tags[type.tag === 'amenity' ? 'bicycle_parking' : type.tag]
+      const groupKey = type.subtypes.some((s) => s.key === parkingType)
+        ? parkingType
+        : '__other__'
+
+      const group = groups.get(groupKey)!
+      const iconUrl = resolveIcon(type, poi.tags)
+
       const icon = L.divIcon({
         className: 'poi-marker',
-        html: `<img src="${type.icon}" width="28" height="28" alt="${type.label}">`,
+        html: `<img src="${iconUrl}" width="28" height="28" alt="${type.label}">`,
         iconSize: [28, 28],
         iconAnchor: [14, 14],
         popupAnchor: [0, -14],
@@ -43,9 +76,19 @@ export async function createPOIMarkers(
 
       L.marker([poi.lat, poi.lon], { icon })
         .bindPopup(buildPopupHTML(type, poi.tags))
-        .addTo(group)
+        .addTo(group.layer)
+
+      group.count++
     }
 
-    group.addTo(map)
+    for (const group of groups.values()) {
+      if (group.count > 0) {
+        group.layer.addTo(map)
+        devLog(`  ${group.subtype!.label}: ${group.count}`)
+      }
+      result.push(group)
+    }
   }
+
+  return result
 }
