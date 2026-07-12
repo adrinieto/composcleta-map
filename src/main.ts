@@ -20,6 +20,18 @@ if (import.meta.env.DEV) {
   devLog('Concello bounds displayed')
 }
 
+const statusEl = L.DomUtil.create('div', 'status-message', map.getContainer())
+const spinner = L.DomUtil.create('div', 'spinner', statusEl)
+L.DomUtil.create('span', '', statusEl).textContent = 'Cargando datos\u2026'
+
 createPOIMarkers(map, POI_TYPES)
-  .then((groups) => createFilter(map, groups))
-  .catch((err) => console.error('Failed to load POIs:', err))
+  .then((groups) => {
+    statusEl.remove()
+    createFilter(map, groups)
+  })
+  .catch((err) => {
+    console.error('Failed to load POIs:', err)
+    spinner.remove()
+    statusEl.textContent = 'Error obteniendo datos'
+    statusEl.classList.add('error')
+  })
