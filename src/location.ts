@@ -10,7 +10,8 @@ export function addMyLocationControl(map: L.Map): void {
       const btn = L.DomUtil.create('a', 'leaflet-control-location', container)
       btn.href = '#'
       btn.title = 'Mi ubicación'
-      btn.innerHTML = '<img src="/src/icons/my-location.svg" alt="Mi ubicación">'
+      const iconUrl = new URL('./icons/my-location.svg', import.meta.url).href
+      btn.innerHTML = `<img src="${iconUrl}" alt="Mi ubicación">`
 
       L.DomEvent.disableClickPropagation(container)
       btn.addEventListener('click', (e) => {
