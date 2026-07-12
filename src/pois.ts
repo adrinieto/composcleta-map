@@ -5,13 +5,14 @@ import { CONCELLO_BOUNDS } from './config'
 import { devLog } from './utils'
 
 export interface POILayerGroup {
+  parentLabel: string
   subtype: POISubtype | null
   layer: L.LayerGroup
   count: number
 }
 
 function buildPopupHTML(type: POIType, tags: Record<string, string>): string {
-  let html = `<strong>${type.label}</strong>`
+  let html = `<strong>${type.popupLabel}</strong>`
 
   const rows = type.popupFields
     .filter((f) => tags[f.key])
@@ -28,8 +29,9 @@ function resolveIcon(
   type: POIType,
   tags: Record<string, string>,
 ): string {
-  const parkingType = tags[type.tag === 'amenity' ? 'bicycle_parking' : type.tag]
-  const subtype = type.subtypes.find((s) => s.key === parkingType)
+  if (type.subtypes.length === 0) return type.fallbackIcon
+  const subtypeKey = tags[type.tag === 'amenity' ? 'bicycle_parking' : type.tag]
+  const subtype = type.subtypes.find((s) => s.key === subtypeKey)
   return subtype?.icon ?? type.fallbackIcon
 }
 
@@ -48,20 +50,36 @@ export async function createPOIMarkers(
 
     const groups = new Map<string, POILayerGroup>()
 
-    for (const subtype of type.subtypes) {
-      groups.set(subtype.key, { subtype, layer: L.layerGroup(), count: 0 })
+    if (type.subtypes.length === 0) {
+      groups.set('__main__', {
+        parentLabel: type.label,
+        subtype: { key: '__main__', label: type.popupLabel, icon: type.fallbackIcon },
+        layer: L.layerGroup(),
+        count: 0,
+      })
+    } else {
+      for (const subtype of type.subtypes) {
+        groups.set(subtype.key, { parentLabel: type.label, subtype, layer: L.layerGroup(), count: 0 })
+      }
+      groups.set('__other__', {
+        parentLabel: type.label,
+        subtype: { key: '__other__', label: 'Otros', icon: type.fallbackIcon },
+        layer: L.layerGroup(),
+        count: 0,
+      })
     }
-    groups.set('__other__', {
-      subtype: { key: '__other__', label: 'Otros', icon: type.fallbackIcon },
-      layer: L.layerGroup(),
-      count: 0,
-    })
 
     for (const poi of pois) {
-      const parkingType = poi.tags[type.tag === 'amenity' ? 'bicycle_parking' : type.tag]
-      const groupKey = type.subtypes.some((s) => s.key === parkingType)
-        ? parkingType
-        : '__other__'
+      let groupKey: string
+
+      if (type.subtypes.length === 0) {
+        groupKey = '__main__'
+      } else {
+        const subtypeKey = poi.tags[type.tag === 'amenity' ? 'bicycle_parking' : type.tag]
+        groupKey = type.subtypes.some((s) => s.key === subtypeKey)
+          ? subtypeKey
+          : '__other__'
+      }
 
       const group = groups.get(groupKey)!
       const iconUrl = resolveIcon(type, poi.tags)

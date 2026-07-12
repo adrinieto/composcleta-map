@@ -1,6 +1,38 @@
 import * as L from 'leaflet'
 import type { POILayerGroup } from './pois'
 
+function createFilterRow(
+  map: L.Map,
+  parent: HTMLElement,
+  group: POILayerGroup,
+): void {
+  const row = L.DomUtil.create('label', 'filter-row', parent)
+
+  const checkbox = L.DomUtil.create('input', '', row) as HTMLInputElement
+  checkbox.type = 'checkbox'
+  checkbox.checked = true
+
+  const img = L.DomUtil.create('img', 'filter-icon', row) as HTMLImageElement
+  img.src = group.subtype!.icon
+  img.width = 20
+  img.height = 20
+  img.alt = ''
+
+  const span = L.DomUtil.create('span', '', row)
+  span.textContent = group.subtype!.label
+
+  const badge = L.DomUtil.create('span', 'filter-badge', row)
+  badge.textContent = `${group.count}`
+
+  checkbox.addEventListener('change', () => {
+    if (checkbox.checked) {
+      group.layer.addTo(map)
+    } else {
+      map.removeLayer(group.layer)
+    }
+  })
+}
+
 export function createFilter(
   map: L.Map,
   groups: POILayerGroup[],
@@ -11,41 +43,50 @@ export function createFilter(
       L.DomEvent.disableClickPropagation(container)
 
       const header = L.DomUtil.create('div', 'filter-header', container)
-      const total = groups.reduce((sum, g) => sum + g.count, 0)
-      header.textContent = `Aparcamientos de bici (${total})`
+      header.textContent = 'Filtros'
 
       const toggle = L.DomUtil.create('button', 'filter-toggle', header)
       toggle.textContent = '−'
 
       const list = L.DomUtil.create('div', 'filter-list', container)
 
+      const byParent = new Map<string, POILayerGroup[]>()
       for (const group of groups) {
-        if (!group.subtype) continue
+        const existing = byParent.get(group.parentLabel) ?? []
+        existing.push(group)
+        byParent.set(group.parentLabel, existing)
+      }
 
-        const row = L.DomUtil.create('label', 'filter-row', list)
+      for (const [parentLabel, parentGroups] of byParent) {
+        const section = L.DomUtil.create('div', 'filter-section', list)
 
-        const checkbox = L.DomUtil.create('input', '', row) as HTMLInputElement
-        checkbox.type = 'checkbox'
-        checkbox.checked = true
+        const sectionHeader = L.DomUtil.create(
+          'div',
+          'filter-section-header',
+          section,
+        )
+        const sectionToggle = L.DomUtil.create(
+          'button',
+          'filter-toggle',
+          sectionHeader,
+        )
+        sectionToggle.textContent = '−'
 
-        const img = L.DomUtil.create('img', 'filter-icon', row) as HTMLImageElement
-        img.src = group.subtype.icon
-        img.width = 20
-        img.height = 20
-        img.alt = ''
+        const sectionLabel = L.DomUtil.create('span', '', sectionHeader)
+        const total = parentGroups.reduce((s, g) => s + g.count, 0)
+        sectionLabel.textContent = `${parentLabel} (${total})`
 
-        const span = L.DomUtil.create('span', '', row)
-        span.textContent = group.subtype.label
+        const sectionList = L.DomUtil.create('div', 'filter-section-list', section)
 
-        const badge = L.DomUtil.create('span', 'filter-badge', row)
-        badge.textContent = `${group.count}`
+        for (const group of parentGroups) {
+          createFilterRow(map, sectionList, group)
+        }
 
-        checkbox.addEventListener('change', () => {
-          if (checkbox.checked) {
-            group.layer.addTo(map)
-          } else {
-            map.removeLayer(group.layer)
-          }
+        let collapsed = false
+        sectionToggle.addEventListener('click', () => {
+          collapsed = !collapsed
+          sectionList.style.display = collapsed ? 'none' : ''
+          sectionToggle.textContent = collapsed ? '+' : '−'
         })
       }
 
