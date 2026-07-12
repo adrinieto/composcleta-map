@@ -45,7 +45,12 @@ out center;
 
   const url = `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`
 
-  const res = await fetch(url)
+  const res = await fetch(url, {
+    headers: {
+      'User-Agent': 'composcleta-osm-map/1.0 (https://github.com/adrinieto/composcleta-map)',
+      'Referer': 'https://adrinieto.github.io/composcleta-map/',
+    },
+  })
   if (!res.ok) throw new Error(`Overpass API error: ${res.status}`)
 
   const data: OverpassResponse = await res.json()
