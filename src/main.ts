@@ -1,7 +1,7 @@
 import * as L from 'leaflet'
 import './style.css'
 import { MAP_OPTIONS, CONCELLO_BOUNDS, saveMapState } from './config'
-import { cyclosmLayer } from './layers'
+import { cyclosmLayer, osmLayer, lightLayer } from './layers'
 import { POI_TYPES } from './poi-types'
 import { createPOIMarkers } from './pois'
 import { createFilter } from './filter'
@@ -16,6 +16,11 @@ const map = L.map('map', MAP_OPTIONS)
 cyclosmLayer.addTo(map)
 addMyLocationControl(map)
 addLegendControl(map)
+L.control.layers(
+  { 'Ciclista': cyclosmLayer, 'Light': lightLayer, 'Estándar': osmLayer },
+  undefined,
+  { collapsed: false },
+).addTo(map)
 
 map.on('moveend', () => saveMapState(map))
 
