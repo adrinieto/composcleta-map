@@ -1,6 +1,6 @@
 import * as L from 'leaflet'
 import type { POIType, POISubtype } from './poi-types'
-import { fetchPOIs, type POI } from './overpass'
+import { fetchPOIs, type OverpassElement, type POI } from './overpass'
 import { CONCELLO_BOUNDS } from './config'
 import { devLog } from './utils'
 
@@ -11,7 +11,7 @@ export interface POILayerGroup {
   count: number
 }
 
-function buildPopupHTML(type: POIType, poi: POI): string {
+function buildPopupHTML(type: POIType, poi: POI | OverpassElement): string {
   let html = `<strong>${type.popupLabel}</strong>`
 
   const rows = type.popupFields
@@ -39,11 +39,35 @@ function resolveIcon(
   return subtype?.icon ?? type.fallbackIcon
 }
 
+function groupPOIData(
+  types: POIType[],
+  elements: OverpassElement[],
+): Map<string, POI[]> {
+  const grouped = new Map<string, POI[]>()
+  for (const type of types) {
+    grouped.set(
+      `${type.tag}=${type.value}`,
+      elements
+        .filter((e) => e.tags[type.tag] === type.value)
+        .map((e) => {
+          const lat = e.lat ?? e.center?.lat ?? 0
+          const lon = e.lon ?? e.center?.lon ?? 0
+          return { id: e.id, type: e.type, lat, lon, tags: e.tags }
+        }),
+    )
+  }
+  return grouped
+}
+
 export async function createPOIMarkers(
   map: L.Map,
   types: POIType[],
+  elements?: OverpassElement[],
 ): Promise<POILayerGroup[]> {
-  const data = await fetchPOIs(CONCELLO_BOUNDS, types)
+  const data = elements !== undefined
+    ? groupPOIData(types, elements)
+    : await fetchPOIs(CONCELLO_BOUNDS, types)
+
   const result: POILayerGroup[] = []
 
   for (const type of types) {

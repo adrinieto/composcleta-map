@@ -8,6 +8,9 @@ import { createFilter } from './filter'
 import { addMyLocationControl } from './location'
 import { addLegendControl } from './legend'
 import { devLog } from './utils'
+import { fetchAllData } from './overpass'
+import { WAY_TYPES } from './way-types'
+import { createWayLayers } from './ways'
 
 const map = L.map('map', MAP_OPTIONS)
 cyclosmLayer.addTo(map)
@@ -28,26 +31,27 @@ if (import.meta.env.DEV) {
 
 const statusEl = L.DomUtil.create('div', 'status-message', map.getContainer())
 
-function loadPOIs() {
+async function loadData(): Promise<void> {
   statusEl.innerHTML = ''
   statusEl.className = 'status-message'
   L.DomUtil.create('div', 'spinner', statusEl)
   L.DomUtil.create('span', '', statusEl).textContent = 'Cargando datos\u2026'
 
-  createPOIMarkers(map, POI_TYPES)
-    .then((groups) => {
-      statusEl.remove()
-      createFilter(map, groups)
-    })
-    .catch((err) => {
-      console.error('Failed to load POIs:', err)
-      statusEl.innerHTML = ''
-      L.DomUtil.create('span', '', statusEl).textContent = 'Error obteniendo datos '
-      const retry = L.DomUtil.create('button', 'retry-btn', statusEl)
-      retry.textContent = 'Reintentar'
-      retry.addEventListener('click', loadPOIs)
-      statusEl.classList.add('error')
-    })
+  try {
+    const elements = await fetchAllData(CONCELLO_BOUNDS, POI_TYPES, WAY_TYPES)
+    const poiGroups = await createPOIMarkers(map, POI_TYPES, elements)
+    const wayGroups = createWayLayers(map, WAY_TYPES, elements)
+    statusEl.remove()
+    createFilter(map, [...poiGroups, ...wayGroups])
+  } catch (err) {
+    console.error('Failed to load data:', err)
+    statusEl.innerHTML = ''
+    L.DomUtil.create('span', '', statusEl).textContent = 'Error obteniendo datos '
+    const retry = L.DomUtil.create('button', 'retry-btn', statusEl)
+    retry.textContent = 'Reintentar'
+    retry.addEventListener('click', loadData)
+    statusEl.classList.add('error')
+  }
 }
 
-loadPOIs()
+loadData()
