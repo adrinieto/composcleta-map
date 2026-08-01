@@ -51,6 +51,8 @@ export function createWayLayers(
     layers.set(type.id, { type, layer: L.layerGroup(), count: 0 })
   }
 
+  const polylines: L.Polyline[] = []
+
   for (const el of elements) {
     if (el.type !== 'way' || !el.geometry) continue
 
@@ -59,12 +61,22 @@ export function createWayLayers(
     for (const entry of layers.values()) {
       if (!matchesType(entry.type, el.tags)) continue
 
-      L.polyline(latlngs, entry.type.style)
-        .bindPopup(buildPopupHTML(entry.type, el.tags, el.id))
-        .addTo(entry.layer)
+      polylines.push(
+        L.polyline(latlngs, entry.type.style)
+          .bindPopup(buildPopupHTML(entry.type, el.tags, el.id))
+          .addTo(entry.layer),
+      )
       entry.count++
     }
   }
+
+  function updateWeights(): void {
+    const zoom = map.getZoom()
+    const weight = Math.min(10, Math.max(2, 2 + (zoom - 12) * 2))
+    for (const line of polylines) line.setStyle({ weight })
+  }
+  updateWeights()
+  map.on('zoomend', updateWeights)
 
   const result: POILayerGroup[] = []
   for (const entry of layers.values()) {
