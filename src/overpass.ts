@@ -1,6 +1,12 @@
 import type { LatLngBounds } from 'leaflet'
 import type { POIType } from './poi-types'
 import type { WayType } from './way-types'
+import { loadCache, saveCache, isFresh, hashString } from './cache'
+
+export interface FetchResult {
+  elements: OverpassElement[]
+  fetchedAt: number
+}
 
 export interface OverpassElement {
   id: number
@@ -45,7 +51,7 @@ export async function fetchAllData(
   bounds: LatLngBounds,
   poiTypes: POIType[],
   wayTypes: WayType[],
-): Promise<OverpassElement[]> {
+): Promise<FetchResult> {
   const bbox = bboxString(bounds)
 
   const poiLines = poiTypes.flatMap(t => [
@@ -63,7 +69,23 @@ export async function fetchAllData(
 );
 out center geom;
 `
-  return overpassQuery(query)
+
+  const cacheKey = `composcleta:overpass:${bbox}:${hashString(query)}`
+  const cached = loadCache<OverpassElement[]>(cacheKey)
+  if (cached && isFresh(cached)) {
+    return { elements: cached.data, fetchedAt: cached.timestamp }
+  }
+
+  try {
+    const elements = await overpassQuery(query)
+    saveCache(cacheKey, elements)
+    return { elements, fetchedAt: Date.now() }
+  } catch (err) {
+    if (cached) {
+      return { elements: cached.data, fetchedAt: cached.timestamp }
+    }
+    throw err
+  }
 }
 
 export async function fetchPOIs(

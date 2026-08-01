@@ -7,7 +7,7 @@ import { createPOIMarkers } from './pois'
 import { createFilter } from './filter'
 import { addMyLocationControl } from './location'
 import { addLegendControl } from './legend'
-import { devLog } from './utils'
+import { devLog, relativeTime } from './utils'
 import { fetchAllData } from './overpass'
 import { WAY_TYPES } from './way-types'
 import { createWayLayers } from './ways'
@@ -18,6 +18,27 @@ addMyLocationControl(map)
 addLegendControl(map)
 
 map.on('moveend', () => saveMapState(map))
+
+let timestampEl: HTMLElement | null = null
+
+const TimestampControl = L.Control.extend({
+  options: { position: 'bottomleft' },
+  onAdd() {
+    timestampEl = L.DomUtil.create('div', 'data-timestamp')
+    return timestampEl
+  },
+})
+new TimestampControl().addTo(map)
+
+let lastFetchedAt: number | null = null
+
+function renderTimestamp(): void {
+  if (timestampEl && lastFetchedAt !== null) {
+    timestampEl.textContent = `Datos actualizados ${relativeTime(lastFetchedAt)}`
+  }
+}
+
+setInterval(renderTimestamp, 60_000)
 
 if (import.meta.env.DEV) {
   L.rectangle(CONCELLO_BOUNDS, {
@@ -38,9 +59,11 @@ async function loadData(): Promise<void> {
   L.DomUtil.create('span', '', statusEl).textContent = 'Cargando datos\u2026'
 
   try {
-    const elements = await fetchAllData(CONCELLO_BOUNDS, POI_TYPES, WAY_TYPES)
-    const poiGroups = await createPOIMarkers(map, POI_TYPES, elements)
-    const wayGroups = createWayLayers(map, WAY_TYPES, elements)
+    const result = await fetchAllData(CONCELLO_BOUNDS, POI_TYPES, WAY_TYPES)
+    lastFetchedAt = result.fetchedAt
+    renderTimestamp()
+    const poiGroups = await createPOIMarkers(map, POI_TYPES, result.elements)
+    const wayGroups = createWayLayers(map, WAY_TYPES, result.elements)
     statusEl.remove()
     createFilter(map, [...poiGroups, ...wayGroups])
   } catch (err) {
