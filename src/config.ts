@@ -17,12 +17,20 @@ function loadMapState(): { center: LatLngTuple; zoom: number } {
 export const MAP_CENTER: LatLngTuple = [42.878, -8.544]
 export const MAP_ZOOM = 14
 
+export const CONCELLO_BOUNDS = L.latLngBounds(
+  [42.8241442, -8.6618109],
+  [42.9896310, -8.3900878],
+)
+
 const saved = loadMapState()
 
 export const MAP_OPTIONS: MapOptions = {
   center: saved.center,
   zoom: saved.zoom,
   zoomControl: true,
+  minZoom: 12,
+  maxBounds: CONCELLO_BOUNDS.pad(0.01),
+  maxBoundsViscosity: 0.8,
 }
 
 export function saveMapState(map: L.Map): void {
@@ -32,8 +40,3 @@ export function saveMapState(map: L.Map): void {
     zoom: map.getZoom(),
   }))
 }
-
-export const CONCELLO_BOUNDS = L.latLngBounds(
-  [42.8241442, -8.6618109],
-  [42.9896310, -8.3900878],
-)
