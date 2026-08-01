@@ -34,6 +34,6 @@ export function saveMapState(map: L.Map): void {
 }
 
 export const CONCELLO_BOUNDS = L.latLngBounds(
-  [42.8241442, -8.6320116],
+  [42.8241442, -8.6618109],
   [42.9896310, -8.3900878],
 )
