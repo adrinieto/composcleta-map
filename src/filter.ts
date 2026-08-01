@@ -22,8 +22,10 @@ function createFilterRow(
   const span = L.DomUtil.create('span', '', row)
   span.textContent = group.subtype!.label
 
-  const badge = L.DomUtil.create('span', 'filter-badge', row)
-  badge.textContent = `${group.count}`
+  if (group.showSectionCount) {
+    const badge = L.DomUtil.create('span', 'filter-badge', row)
+    badge.textContent = `${group.count}`
+  }
 
   checkbox.addEventListener('change', () => {
     if (checkbox.checked) {
@@ -68,8 +70,10 @@ export function createFilter(
         )
 
         const sectionLabel = L.DomUtil.create('span', '', sectionHeader)
-        const total = parentGroups.reduce((s, g) => s + g.count, 0)
-        sectionLabel.textContent = `${parentLabel} (${total})`
+        const showCount = parentGroups[0]?.showSectionCount ?? true
+        sectionLabel.textContent = showCount
+          ? `${parentLabel} (${parentGroups.reduce((s, g) => s + g.count, 0)})`
+          : parentLabel
 
         const sectionList = L.DomUtil.create('div', 'filter-section-list', section)
 

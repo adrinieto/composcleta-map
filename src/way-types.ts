@@ -2,6 +2,7 @@ import type { PolylineOptions } from 'leaflet'
 
 export interface WayType {
   id: string
+  parentLabel: string
   label: string
   popupLabel: string
   overpassLines: string[]
@@ -13,8 +14,9 @@ export interface WayType {
 export const WAY_TYPES: WayType[] = [
   {
     id: 'contraflow',
+    parentLabel: 'Infraestructura ciclista',
     label: 'Contrasentido bici',
-    popupLabel: 'Calle con contrasentido ciclista',
+    popupLabel: 'Calle con circulación en contrasentido',
     overpassLines: [
       'way["oneway"]["oneway:bicycle"="no"]',
       'way["oneway"]["cycleway"="opposite"]',
@@ -26,12 +28,12 @@ export const WAY_TYPES: WayType[] = [
     ],
     style: {
       color: '#d57aff',
-      weight: 5,
-      opacity: 0.8,
+      weight: 10,
+      opacity: 1,
     },
     popupFields: [
       { key: 'oneway', label: 'Dirección única' },
-      { key: 'oneway:bicycle', label: 'Bici contrasentido' },
+      { key: 'oneway:bicycle', label: 'Bici dirección única' },
       { key: 'cycleway', label: 'Carril bici' },
       { key: 'cycleway:left', label: 'Carril bici (izq)' },
       { key: 'cycleway:right', label: 'Carril bici (der)' },

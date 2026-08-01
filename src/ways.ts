@@ -72,10 +72,11 @@ export function createWayLayers(
       entry.layer.addTo(map)
     }
     result.push({
-      parentLabel: entry.type.label,
+      parentLabel: entry.type.parentLabel,
       subtype: { key: entry.type.id, label: entry.type.label, icon: entry.type.icon },
       layer: entry.layer,
       count: entry.count,
+      showSectionCount: false,
     })
     devLog(`  ${entry.type.label}: ${entry.count} vías`)
   }

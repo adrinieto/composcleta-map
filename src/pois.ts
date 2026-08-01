@@ -9,6 +9,7 @@ export interface POILayerGroup {
   subtype: POISubtype | null
   layer: L.LayerGroup
   count: number
+  showSectionCount: boolean
 }
 
 function buildPopupHTML(type: POIType, poi: POI | OverpassElement): string {
@@ -84,16 +85,18 @@ export async function createPOIMarkers(
         subtype: { key: '__main__', label: type.popupLabel, icon: type.fallbackIcon },
         layer: L.layerGroup(),
         count: 0,
+        showSectionCount: true,
       })
     } else {
       for (const subtype of type.subtypes) {
-        groups.set(subtype.key, { parentLabel: type.label, subtype, layer: L.layerGroup(), count: 0 })
+        groups.set(subtype.key, { parentLabel: type.label, subtype, layer: L.layerGroup(), count: 0, showSectionCount: true })
       }
       groups.set('__other__', {
         parentLabel: type.label,
         subtype: { key: '__other__', label: 'Otros', icon: type.fallbackIcon },
         layer: L.layerGroup(),
         count: 0,
+        showSectionCount: true,
       })
     }
 
